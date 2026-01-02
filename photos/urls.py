@@ -1,10 +1,8 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import PhotoViewSet
-
-router = DefaultRouter()
-router.register(r'photos', PhotoViewSet)
+# urls.py
+from django.urls import path
+from . import views
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('get-upload-url/', views.get_presigned_url, name='get-upload-url'),
+    path('photos/', views.list_photos, name='list-photos')
 ]

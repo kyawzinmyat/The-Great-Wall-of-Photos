@@ -19,7 +19,7 @@ function App() {
   const fetchPhotos = async () => {
     try {
       const response = await axios.get(`${API_URL}/photos/`);
-      setPhotos(response.data);
+      setPhotos(response.data.photos);
     } catch (error) {
       console.error('Error fetching photos:', error);
       setError('Failed to fetch photos. Make sure the backend is running.');
@@ -41,17 +41,31 @@ function App() {
 
     setUploading(true);
     setError('');
+    const response = await fetch(`http://localhost:8000/api/get-upload-url/?file_name=${selectedFile.name}`);
+    const data = await response.json();
+      
+      if (!data.url) {
+        throw new Error('Failed to get upload URL');
+      }
 
+    console.log("Got Presigned URL:", data.url);
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('title', title || selectedFile.name);
     formData.append('description', description);
 
     try {
-      await axios.post(`${API_URL}/photos/`, formData, {
+      // await axios.post(`${API_URL}/photos/`, formData, {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data',
+      //   },
+      // });
+      const result = await fetch(data.url, {
+        method: 'PUT',
+        body: selectedFile,
         headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+          'Content-Type': selectedFile.type // Important: Must match what you signed in Django
+        }
       });
       
       // Reset form
@@ -146,7 +160,7 @@ function App() {
             <div className="photo-grid">
               {photos.map((photo) => (
                 <div key={photo.id} className="photo-card">
-                  <img src={photo.s3_url} alt={photo.title} />
+                  <img src={photo.image_url} alt={photo.title} />
                   <div className="photo-info">
                     <h3>{photo.title}</h3>
                     {photo.description && <p>{photo.description}</p>}
